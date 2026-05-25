@@ -4,8 +4,8 @@ import os
 import shutil
 from typing import Any
 
-from chess_understanding.chess.stockfish_binary import ensure_stockfish, stockfish_binary_path
-from chess_understanding.chess.uci import UciEngine
+from .stockfish_binary import ensure_stockfish, stockfish_binary_path
+from .uci import UciEngine
 
 
 def find_stockfish(*, download: bool = True) -> str:

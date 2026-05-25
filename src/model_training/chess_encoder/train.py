@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from chess_understanding.model_training.chess_encoder.model import ChessEncoder
+from model_training.chess_encoder.model import ChessEncoder
 
 
 def main() -> None:

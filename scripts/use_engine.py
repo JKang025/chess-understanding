@@ -1,7 +1,8 @@
 import chess
 
-from chess_understanding.chess.stockfish import StockfishEngine, find_stockfish
+from chess_tools.stockfish import StockfishEngine, find_stockfish
 
+## uv run python scripts/use_engine.py
 
 def main() -> None:
     board = chess.Board()

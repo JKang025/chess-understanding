@@ -5,7 +5,7 @@ from typing import Any
 import chess
 import chess.engine
 
-from chess_understanding.chess.engine import AnalysisResult, EngineContextMixin
+from .engine import AnalysisResult, EngineContextMixin
 
 
 class UciEngine(EngineContextMixin):
