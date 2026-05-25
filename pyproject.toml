@@ -1,0 +1,13 @@
+[project]
+name = "chess-understanding"
+version = "0.1.0"
+description = "Add your description here"
+authors = [
+    { name = "Jeffrey Kang", email = "knightdips@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
