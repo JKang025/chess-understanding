@@ -13,7 +13,7 @@ import chess.pgn
 #
 # uv run python scripts/filter_lichess_games.py \
 #   --input data/lichess_open_database/lichess_db_standard_rated_2024-01.pgn.zst \
-#   --min-elo 1800 --time-control-prefix 180+ --variant Standard
+#   --min-elo 1800 --min-speed blitz --variant Standard
 #
 # uv run python scripts/filter_lichess_games.py \
 #   --input data/lichess_open_database/lichess_db_standard_rated_2024-01.pgn \
@@ -46,6 +46,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--min-elo", type=int, default=None)
     parser.add_argument("--max-elo", type=int, default=None)
     parser.add_argument("--time-control-prefix", default=None)
+    parser.add_argument(
+        "--min-speed",
+        choices=["bullet", "blitz", "rapid", "classical"],
+        default=None,
+        help="Keep games at this speed or slower (e.g. blitz keeps blitz/rapid/classical).",
+    )
     parser.add_argument("--variant", default=None)
     parser.add_argument("--result", choices=["1-0", "0-1", "1/2-1/2"], default=None)
     parser.add_argument("--opening-contains", default=None)
@@ -86,6 +92,37 @@ def parse_elo(headers: chess.pgn.Headers, key: str) -> int | None:
         return None
 
 
+def parse_time_control_seconds(value: str) -> tuple[int, int] | None:
+    # Expected format is "<base>+<increment>", for example "180+2".
+    if "+" not in value:
+        return None
+    left, right = value.split("+", 1)
+    try:
+        return int(left), int(right)
+    except ValueError:
+        return None
+
+
+def speed_rank(headers: chess.pgn.Headers) -> int | None:
+    tc = headers.get("TimeControl", "")
+    parsed = parse_time_control_seconds(tc)
+    if parsed is None:
+        return None
+
+    base_seconds, increment_seconds = parsed
+    estimated_seconds = base_seconds + (40 * increment_seconds)
+
+    # Lichess-style speed buckets based on estimated game duration.
+    # bullet: <3m, blitz: 3m-<8m, rapid: 8m-<25m, classical: >=25m
+    if estimated_seconds < 180:
+        return 0
+    if estimated_seconds < 480:
+        return 1
+    if estimated_seconds < 1500:
+        return 2
+    return 3
+
+
 def matches_filters(game: chess.pgn.Game, args: argparse.Namespace) -> bool:
     headers = game.headers
 
@@ -98,6 +135,14 @@ def matches_filters(game: chess.pgn.Game, args: argparse.Namespace) -> bool:
     if args.time_control_prefix:
         tc = headers.get("TimeControl", "")
         if not tc.startswith(args.time_control_prefix):
+            return False
+
+    if args.min_speed:
+        rank = speed_rank(headers)
+        if rank is None:
+            return False
+        required_rank = {"bullet": 0, "blitz": 1, "rapid": 2, "classical": 3}[args.min_speed]
+        if rank < required_rank:
             return False
 
     if args.opening_contains:
