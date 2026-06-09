@@ -1,10 +1,11 @@
 from .game import Game
+from .sqlite_dataset import SQLiteGameDataset
 from .sqlite_extractor import (
     GameExtractionError,
     GameParseError,
     GameValidationError,
     iter_games,
-    load_games,
+    row_id_bounds,
 )
 
 __all__ = [
@@ -12,6 +13,7 @@ __all__ = [
     "GameExtractionError",
     "GameParseError",
     "GameValidationError",
+    "SQLiteGameDataset",
     "iter_games",
-    "load_games",
+    "row_id_bounds",
 ]

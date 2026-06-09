@@ -14,7 +14,7 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from data import load_games
+from data import Game, iter_games
 
 DEFAULT_DB = ROOT / "data/sqlite_db/lichess_standard_rated_2026-04_minelo2000_minspeedblitz.sqlite.db"
 
@@ -40,24 +40,31 @@ def main() -> int:
         print(f"FAIL: DB not found: {args.db}", file=sys.stderr)
         return 1
 
-    games = load_games(args.db, limit=args.limit)
-    if len(games) != args.limit:
-        print(f"FAIL: expected {args.limit} rows, got {len(games)}", file=sys.stderr)
-        return 1
-
-    for idx, game in enumerate(games, start=1):
+    first_game: Game | None = None
+    validated_rows = 0
+    for idx, game in enumerate(iter_games(args.db, limit=args.limit), start=1):
+        if first_game is None:
+            first_game = game
+        validated_rows += 1
         move_count = len(list(game.parsed_pgn.mainline_moves()))
         if move_count < 1:
             print(f"FAIL: row {idx} row_id={game.row_id} parsed with zero moves", file=sys.stderr)
             return 1
 
-    first = games[0]
+    if validated_rows != args.limit:
+        print(f"FAIL: expected {args.limit} rows, got {validated_rows}", file=sys.stderr)
+        return 1
+
+    if first_game is None:
+        print("FAIL: no games validated", file=sys.stderr)
+        return 1
+
     print("PASS")
     print(f"db: {args.db}")
-    print(f"validated_rows: {len(games)}")
-    print(f"sample_row_id: {first.row_id}")
-    print(f"sample_game_id: {first.game_id}")
-    print(f"sample_white_black: {first.white} vs {first.black}")
+    print(f"validated_rows: {validated_rows}")
+    print(f"sample_row_id: {first_game.row_id}")
+    print(f"sample_game_id: {first_game.game_id}")
+    print(f"sample_white_black: {first_game.white} vs {first_game.black}")
     return 0
 
 
